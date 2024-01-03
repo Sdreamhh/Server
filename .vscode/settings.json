@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "inet.h": "c"
+        "inet.h": "c",
+        "add.h": "c",
+        "pthread.h": "c"
     }
 }

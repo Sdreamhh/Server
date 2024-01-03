@@ -9,15 +9,14 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <pthread.h>
+
+
+#include "color.h"
+#include "add.h"
 
 
 #define MAXBUF 2048
-
-/* Color definitions */
-#define END "\033[0m"
-#define RED "\033[1;31m"
-#define CYAN "\033[1;36m"
-#define YELLOW "\033[1;33m"
 
 
 void sendpage(int fd, char *filename);
@@ -30,10 +29,13 @@ void ana_uri(char *uri, char *filename, char *filetype);
 
 int main(int argc, char *argv[]) {
 
+
     if(argc != 2) {
         fprintf(stderr, "%susage: %s <port>%s\n", CYAN, argv[0], END);
         exit(EXIT_FAILURE);
     }
+
+    printf("Debug: %d\n", add(1, 2));
 
     int port = atoi(argv[1]);
 
@@ -87,8 +89,8 @@ void ana_uri(char *uri, char *filename, char *filetype) {
 
     //printf("Debug: %s %s\n", uri, filename);
     
-    strcpy(filename, "");
-    strcat(filename, ".");
+    strcpy(filename, ".");
+
 
     /* Get filename */
     if(strcmp(uri, "/") == 0) 
@@ -154,6 +156,7 @@ void response(int fd, char *header) {
 
     /* Send files */
     int srcfd = open(filename, O_RDONLY, 0);
+    printf("%s\n", filename);
     char *srcp = mmap(0, s_stat.st_size, PROT_READ, MAP_PRIVATE, srcfd, 0);
     close(srcfd);
     write(fd, srcp, s_stat.st_size);
