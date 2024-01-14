@@ -2,6 +2,8 @@
     "files.associations": {
         "inet.h": "c",
         "add.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "log.h": "c",
+        "color.h": "c"
     }
 }

@@ -1,0 +1,48 @@
+body {
+    background-color: pink;
+    margin-top: 100px;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+}
+
+
+.nav {
+    display: flex;
+    background-color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 25px 20px -20px rgba(0, 0, 0, 0.4);
+}
+
+.nav > div {
+    margin: 2.5% auto;
+    font-size: large;
+    font-style: italic;
+}
+
+
+h1 {
+    margin-top: 10%;
+    text-align: center;
+    color:floralwhite;
+
+}
+
+h1:hover {
+    color: rgb(214, 186, 101);
+}
+
+.description {
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    font-size: xx-large;
+    margin: 8% 16%;
+}
+
+.img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

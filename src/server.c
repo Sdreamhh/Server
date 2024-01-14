@@ -13,16 +13,13 @@
 
 
 #include "color.h"
-#include "add.h"
+#include "log.h"
 
 
 #define MAXBUF 2048
 
 
 void sendpage(int fd, char *filename);
-
-
-
 void response(int fd, char *header);
 void ana_uri(char *uri, char *filename, char *filetype);
 
@@ -35,7 +32,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Debug: %d\n", add(1, 2));
 
     int port = atoi(argv[1]);
 
@@ -60,6 +56,8 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in clientaddr;
     socklen_t clientlen = sizeof(clientaddr);
 
+    /* Write start message to file log */
+    log_start();
     while(1) {
 
         int clientfd = accept(serverfd, (struct sockaddr *)(&clientaddr), &clientlen);
@@ -68,12 +66,16 @@ int main(int argc, char *argv[]) {
         inet_ntop(AF_INET, &clientaddr.sin_addr.s_addr, addr, sizeof(addr));
         printf("%sConnected: client -> %s:%d%s\n", YELLOW, addr, ntohs(clientaddr.sin_port), END);
 
+
+        /* Write address message to file log */
+        log_addr(addr);
+
+
         char header[MAXBUF] = "";
         recv(clientfd, header, 1024, 0);
         printf("Header-length: %ld\n%s", strlen(header), header);
 
         response(clientfd, header);
-
 
         //sendpage(clientfd, "index.html");
         close(clientfd);
@@ -101,12 +103,18 @@ void ana_uri(char *uri, char *filename, char *filetype) {
     /* Get filetype(MIME) */
     if(strstr(filename, ".html"))  
         strcpy(filetype, "text/html");
+    else if(strstr(filename, ".jpg"))
+        strcpy(filetype, ".jpg");
     else if(strstr(filename, ".png"))
         strcpy(filetype, "image/png");
     else if(strstr(filename, ".webp"))
         strcpy(filetype, "image/webp");
     else if(strstr(filename, ".ico"))
         strcpy(filetype, "image/x-icon");
+    else if(strstr(filename, ".css"))
+        strcpy(filetype, "text/css");
+    else if(strstr(filename, ".js"))
+        strcpy(filetype, "text/javascript");
     else 
         fprintf(stderr, "%sNo match MIME.%s\n", RED, END);
     
