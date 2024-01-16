@@ -1,39 +1,10 @@
-#include <stdio.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <string.h>
-#include <strings.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <pthread.h>
+#include "server.h"
 
 
-#include "color.h"
-#include "log.h"
 
+int start_server(int port) {
 
-#define MAXBUF 2048
-
-
-void sendpage(int fd, char *filename);
-void response(int fd, char *header);
-void ana_uri(char *uri, char *filename, char *filetype);
-
-
-int main(int argc, char *argv[]) {
-
-
-    if(argc != 2) {
-        fprintf(stderr, "%susage: %s <port>%s\n", CYAN, argv[0], END);
-        exit(EXIT_FAILURE);
-    }
-
-
-    int port = atoi(argv[1]);
+    /* socker -> bind -> lister : return serverfd*/
 
     int serverfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -43,7 +14,6 @@ int main(int argc, char *argv[]) {
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY);   /* All local address */
     servaddr.sin_port = htons(port);
 
-    //while(bind(serverfd, (struct sockaddr *)(&servaddr), sizeof(servaddr)) != 0);
     if(bind(serverfd, (struct sockaddr *)(&servaddr), sizeof(servaddr)) != 0) {
         fprintf(stderr, "%sBind error! Try again or try another port.\n%s", RED, END);
         exit(EXIT_FAILURE);
@@ -52,89 +22,61 @@ int main(int argc, char *argv[]) {
     listen(serverfd, 128);
     printf("Server: waiting for connection on port %d...\n", port);
 
-
-    struct sockaddr_in clientaddr;
-    socklen_t clientlen = sizeof(clientaddr);
-
-    /* Write start message to file log */
-    log_start();
-    while(1) {
-
-        int clientfd = accept(serverfd, (struct sockaddr *)(&clientaddr), &clientlen);
-        char addr[64];
-
-        inet_ntop(AF_INET, &clientaddr.sin_addr.s_addr, addr, sizeof(addr));
-        printf("%sConnected: client -> %s:%d%s\n", YELLOW, addr, ntohs(clientaddr.sin_port), END);
-
-
-        /* Write address message to file log */
-        log_addr(addr);
-
-
-        char header[MAXBUF] = "";
-        recv(clientfd, header, 1024, 0);
-        printf("Header-length: %ld\n%s", strlen(header), header);
-
-        response(clientfd, header);
-
-        //sendpage(clientfd, "index.html");
-        close(clientfd);
-    }
-    close(serverfd);
-
-    return 0;
-}
-
-
-
-void ana_uri(char *uri, char *filename, char *filetype) {
-
-    //printf("Debug: %s %s\n", uri, filename);
-    
-    strcpy(filename, ".");
-
-
-    /* Get filename */
-    if(strcmp(uri, "/") == 0) 
-        strcat(filename, "/index.html");
-    else 
-        strcat(filename, uri);
-
-    /* Get filetype(MIME) */
-    if(strstr(filename, ".html"))  
-        strcpy(filetype, "text/html");
-    else if(strstr(filename, ".jpg"))
-        strcpy(filetype, ".jpg");
-    else if(strstr(filename, ".png"))
-        strcpy(filetype, "image/png");
-    else if(strstr(filename, ".webp"))
-        strcpy(filetype, "image/webp");
-    else if(strstr(filename, ".ico"))
-        strcpy(filetype, "image/x-icon");
-    else if(strstr(filename, ".css"))
-        strcpy(filetype, "text/css");
-    else if(strstr(filename, ".js"))
-        strcpy(filetype, "text/javascript");
-    else 
-        fprintf(stderr, "%sNo match MIME.%s\n", RED, END);
-    
+    return serverfd;
 }
 
 
 void response(int fd, char *header) {
 
-    char method[MAXBUF], uri[MAXBUF], version[MAXBUF];
-    char filetype[128], filename[MAXBUF];
-    struct stat s_stat;
-
-    //printf("Debug: %s\n", filename);
+    char method[10], uri[URI_SIZE], version[10];
 
     sscanf(header, "%s %s %s", method, uri, version);
 
-    /* Get filename and filetype */
-    ana_uri(uri, filename, filetype);
+    if(strstr(uri, "cgi")) {
+        request_dynamic(uri);
+    }
+    else {
+        request_static(fd, uri);
+    }
+}
 
-    printf("Debug: %s %s\n", filename, filetype);
+
+static void request_dynamic(char *uri) {
+
+    printf("Debug: %s\n", uri);
+
+    /* /cig/adder?num1=10&num2=20 -> prog: ./cgi/adder env: num1=10&num2=20 */
+    char prog[64], env[128], *emptylist[] = { NULL };
+
+    strcpy(prog, ".");
+
+    char *p = strchr(uri, '?');
+
+    strncpy(prog + 1, uri, p - uri);
+    strncpy(env, p + 1, strlen(uri) - (p - uri));
+
+    /* p - uri plus 1 relative to prog + 1 */
+    prog[p - uri + 1] = '\0';
+
+    printf("%s\n%s\n", prog, env);
+   
+    if(fork() == 0) {
+
+        if(setenv("QUERY_STRING", env, 1) != 0) {
+            fprintf(stderr, "%sSet env 'QUERY_STRING' failed!%s\n", RED, END);
+        }
+        execv(prog, emptylist);
+    }
+    wait(NULL);
+
+}
+
+static void request_static(int fd, char * uri) {
+
+    char  filename[URI_SIZE], filetype[64];
+    struct stat s_stat;
+
+    analyse_uri(uri, filename, filetype);
 
     stat(filename, &s_stat);
 
@@ -169,48 +111,36 @@ void response(int fd, char *header) {
     close(srcfd);
     write(fd, srcp, s_stat.st_size);
     munmap(srcp, s_stat.st_size);
-
 }
 
 
 
+static void analyse_uri(char *uri, char *filename, char *filetype) {
+   
+    char *suffix[] = {".html",     ".jpg",      ".png",      ".ico",         ".css",     ".js",             ".webp",      ".gif",      NULL};
+    char *MIME[]   = {"text/html", "image/jpg", "image/png", "image/x-icon", "text/css", "text/javascript", "image/webp", "image/gif", NULL};
 
+    strcpy(filename, ".");
 
+    /* Get filename */
+    if(strcmp(uri, "/") == 0) 
+        strcat(filename, "/index.html");    /* default */
+    else 
+        strcat(filename, uri);
 
-void sendpage(int fd, char *filename) {
-
-    /* Get file information for st_szie */
-    struct stat sbuf;
-    stat(filename, &sbuf);
-
-    char buf[MAXBUF];
-    char *message[] = {
-        "HTTP/1.1 200 OK\r\n",
-        "Server: Milkv-duo server\r\n",
-        "Connection: close\r\n",
-        "Content-length: xxx\r\n",
-        "Content-type: text/html\r\n\r\n"
-    };
-
-    /* Send response header */
-    for(int i = 0; i < 5; i++) {
-        if(i == 3) {
-            sprintf(buf, "Content-length: %ld\r\n", sbuf.st_size);
-            send(fd, buf, strlen(buf), 0);
-            continue;
+    /* Get filetype(MIME) */
+    for(int i = 0; ; i++) {
+        if(suffix[i] == NULL) {
+            printf("%sNo match MIME. Set default: text/plain. %s\n", RED, END);
+            strcpy(filetype, "text/plain");
+            break;
         }
-        send(fd, message[i], strlen(message[i]), 0);
+        if(strstr(filename, suffix[i])){
+            strcpy(filetype, MIME[i]);
+            break;
+        }
     }
-
-    /* Send html page */
-
-    FILE *pfile = fopen(filename, "r");
-
-    char data[1024]; 
-    do {
-        fgets(data, 1024, pfile);
-        send(fd, data, strlen(data), 0);
-    } while(!feof(pfile));
-    
-
 }
+
+
+

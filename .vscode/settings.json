@@ -4,6 +4,12 @@
         "add.h": "c",
         "pthread.h": "c",
         "log.h": "c",
-        "color.h": "c"
-    }
+        "color.h": "c",
+        "mman.h": "c",
+        "unistd.h": "c",
+        "strings.h": "c",
+        "stat.h": "c",
+        "stdlib.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }
