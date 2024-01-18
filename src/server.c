@@ -33,7 +33,7 @@ void response(int fd, char *header) {
     sscanf(header, "%s %s %s", method, uri, version);
 
     if(strstr(uri, "cgi")) {
-        request_dynamic(uri);
+        request_dynamic(fd, uri);
     }
     else {
         request_static(fd, uri);
@@ -41,7 +41,7 @@ void response(int fd, char *header) {
 }
 
 
-static void request_dynamic(char *uri) {
+static void request_dynamic(int fd, char *uri) {
 
     printf("Debug: %s\n", uri);
 
@@ -65,6 +65,7 @@ static void request_dynamic(char *uri) {
         if(setenv("QUERY_STRING", env, 1) != 0) {
             fprintf(stderr, "%sSet env 'QUERY_STRING' failed!%s\n", RED, END);
         }
+        dup2(fd, STDOUT_FILENO);
         execv(prog, emptylist);
     }
     wait(NULL);

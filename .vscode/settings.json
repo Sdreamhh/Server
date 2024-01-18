@@ -9,7 +9,8 @@
         "unistd.h": "c",
         "strings.h": "c",
         "stat.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "header.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

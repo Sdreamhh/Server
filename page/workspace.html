@@ -8,19 +8,61 @@
 
     <style>
         body {
-            background-color: burlywood;
+            background-color: rgb(85, 152, 162);
+        }
+
+        #ans {
+            margin-left: 20px;
+            margin-top: 20px;
+            margin-right: 70%;
+            background-color: antiquewhite;
         }
     </style>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.7.1.js"></script>
 </head>
 <body>
     <h1>This page is for workspace.</h1>
-    
-    <form action="../cgi/adder" target="_blank">
-        a:<input name="num1"><br>
-        b:<input name="num2"><br>
-        
-        <input type="submit">
-    </form>
+
+    <div>
+        <h2>Traditional form submit</h2>
+        <form action="../cgi/adder" target="_blank">
+            num1:<input name="num1" placeholder="you will get sum of"><br>
+            num2:<input name="num2" placeholder="num1 and num2"><br>
+            
+            <input type="submit">
+        </form>
+
+    </div>
+
+    <br>
+
+    <div>
+
+        <form id="form">
+            num1:<input name="num1" placeholder="input a number"><br>
+            num2:<input name="num2"><br>
+            
+            <script>
+                $(document).ready(function () {
+                    $("#submit").click(function () {
+                        var formDate = $("#form").serialize();
+
+                        $.ajax({
+                            url: "../cgi/adder",
+                            data: formDate,
+                            success: function( result ) {
+                            $("#ans").html("The sum is <strong>" + result + "</strong>");
+
+                            document.getElementById("ans").style.backgroundColor = "red";                            }
+                        });
+                    })
+                })
+            </script>
+        </form>
+        <button id="submit">jQuery + ajax + form</button>
+
+        <div id="ans">The sum will be written here.</div>
+    </div>
 
 </body>
 </html>
