@@ -32,6 +32,11 @@ void response(int fd, char *header) {
 
     sscanf(header, "%s %s %s", method, uri, version);
 
+    if(strcmp(method, "POST") == 0) {
+        post_handler(fd, header);
+        return;
+    }
+
     if(strstr(uri, "cgi")) {
         request_dynamic(fd, uri);
     }
@@ -39,6 +44,27 @@ void response(int fd, char *header) {
         request_static(fd, uri);
     }
 }
+
+
+static void post_handler(int fd, char *header) {
+
+    printf("A %s'POST'%s method!\n", YELLOW, END);
+
+    char *s = strstr(header, "Content-length: ");
+    
+    printf("hh%shh", s);
+
+    // printf("%s%c%s", RED, *s, END);
+    // char *e = strstr(s, "\r\n");
+
+    // char length[100];
+
+
+    // strncpy(s, length, 10);
+    // printf("%slength: %s%s", RED, length, END);
+
+}
+
 
 
 static void request_dynamic(int fd, char *uri) {
@@ -58,7 +84,7 @@ static void request_dynamic(int fd, char *uri) {
     /* p - uri plus 1 relative to prog + 1 */
     prog[p - uri + 1] = '\0';
 
-    printf("%s\n%s\n", prog, env);
+    printf("%s\n%s\nend\n\n", prog, env);
    
     if(fork() == 0) {
 
@@ -96,7 +122,7 @@ static void request_static(int fd, char * uri) {
     }
 
     /* Send key message with format */
-    char buf[MAXBUF];
+    char buf[128];
     sprintf(buf, "Content-length: %ld\r\n", s_stat.st_size);
     send(fd, buf, strlen(buf), 0);
     printf("%s", buf);

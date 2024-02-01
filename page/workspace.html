@@ -37,7 +37,7 @@
     <br>
 
     <div>
-
+        <h2>Ajax form submit</h2>
         <form id="form">
             num1:<input name="num1" placeholder="input a number"><br>
             num2:<input name="num2"><br>
@@ -62,6 +62,57 @@
         <button id="submit">jQuery + ajax + form</button>
 
         <div id="ans">The sum will be written here.</div>
+    </div>
+
+    <br>
+
+    <div>
+        <form id="form2" action="../cgi/run" target="_blank">
+            linux> <input name="prog">
+        </form>
+
+        <script>
+            $(document).ready(function () {
+                $("#set").click(function () {
+                    var formDate = $("#form2").serialize();
+
+                    $.ajax({
+                        url: "../cgi/run",
+                        data: formDate,
+                        success: function( result ) {
+
+                        
+                        let arr = result.split('\n');
+
+                        console.log(arr);
+
+                        let string = "";
+
+                        for(let i = 0; i < arr.length; i++) {
+                            href = arr[i];
+                            string += '<a href="../' + href + '">' + arr[i] + "</a><br>"; 
+                        }
+
+                        $("#ter").html(string);
+
+                        }
+                    });
+                })
+            })
+        </script>
+
+
+        <button id="set">test</button>
+        
+        <div id="ter"></div>
+
+    </div>
+    <div>
+
+        <form ENCTYPE="multipart/form-data" method="post">
+            <input name="file" type="file"/>
+            <input type="submit" value="upload"/>
+        </form>
     </div>
 
 </body>

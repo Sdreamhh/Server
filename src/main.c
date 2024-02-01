@@ -38,13 +38,12 @@ int main(int argc, char *argv[]) {
         log_addr(addr);
 
 
-        char header[MAXBUF] = "";
-        recv(clientfd, header, 1024, 0);
-        printf("Header-length: %ld\n%s", strlen(header), header);
+        char header[HEADER_SIZE] = "";
+        recv(clientfd, header, HEADER_SIZE, 0);
+        printf("Header-length: %ld\n%s\nheader end\n", strlen(header), header);
 
         response(clientfd, header);
 
-        //sendpage(clientfd, "index.html");
         close(clientfd);
     }
     close(serverfd);

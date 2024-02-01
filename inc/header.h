@@ -17,8 +17,9 @@
 
 #include "color.h"
 #include "log.h"
+#include "server.h"
+#include "decode.h"
 
 
-#define MAXBUF 2048
-
+#define HEADER_SIZE 2048
 #define URI_SIZE 2048
